@@ -1,0 +1,187 @@
+{
+  "entities": {
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public high score entry for the Uçan Fil global leaderboard (contains zero PII).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 2, "maxLength": 30 },
+        "bestScore": { "type": "number" },
+        "difficulty": { "type": "string", "enum": ["easy", "classic", "turbo"] },
+        "bodyType": { "type": "string", "enum": ["slim", "normal", "chubby"] },
+        "skinId": { "type": "string", "maxLength": 40 },
+        "hatId": { "type": "string", "maxLength": 40 },
+        "glassesId": { "type": "string", "maxLength": 40 },
+        "suitId": { "type": "string", "maxLength": 40 },
+        "nameColorId": { "type": "string", "maxLength": 40 },
+        "isCreator": { "type": "boolean" },
+        "hasCustomName": { "type": "boolean" },
+        "lastNameChangeAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "bestScore", "difficulty", "bodyType", "isCreator", "hasCustomName", "lastNameChangeAt", "updatedAt"]
+    },
+    "LeveledLeaderboardEntry": {
+      "title": "LeveledLeaderboardEntry",
+      "description": "Public level-based leaderboard entry for Seviyeli mode (contains zero PII).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "minLength": 2, "maxLength": 30 },
+        "maxLevel": { "type": "number" },
+        "bestLevelScore": { "type": "number" },
+        "completedLevels": { "type": "number" },
+        "difficulty": { "type": "string", "enum": ["easy", "classic", "turbo"] },
+        "bodyType": { "type": "string", "enum": ["slim", "normal", "chubby"] },
+        "skinId": { "type": "string", "maxLength": 40 },
+        "hatId": { "type": "string", "maxLength": 40 },
+        "glassesId": { "type": "string", "maxLength": 40 },
+        "suitId": { "type": "string", "maxLength": 40 },
+        "nameColorId": { "type": "string", "maxLength": 40 },
+        "isCreator": { "type": "boolean" },
+        "hasCustomName": { "type": "boolean" },
+        "lastNameChangeAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "maxLevel", "bestLevelScore", "completedLevels", "difficulty", "bodyType", "isCreator", "hasCustomName", "lastNameChangeAt", "updatedAt"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Private player progression storing peanut currency, unlocked cosmetics, upgrades, and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "peanutBank": { "type": "number" },
+        "bodyType": { "type": "string", "enum": ["slim", "normal", "chubby"] },
+        "unlockedIds": { "type": "array", "description": "List of unlocked cosmetic IDs (max 200)." },
+        "equippedHat": { "type": "string", "maxLength": 40 },
+        "equippedGlasses": { "type": "string", "maxLength": 40 },
+        "equippedSkin": { "type": "string", "maxLength": 40 },
+        "equippedTrail": { "type": "string", "maxLength": 40 },
+        "equippedSuit": { "type": "string", "maxLength": 40 },
+        "magnetLevel": { "type": "number" },
+        "doublePeanutLevel": { "type": "number" },
+        "shieldCount": { "type": "number" },
+        "dailyQuestsDate": { "type": "string", "maxLength": 12 },
+        "dailyQuestsProgress": { "type": "object", "description": "Daily quest progress counters keyed by quest ID." },
+        "dailyQuestsClaimed": { "type": "array", "description": "Claimed daily quest IDs for the current date (max 3)." },
+        "preferredDifficulty": { "type": "string", "enum": ["easy", "classic", "turbo"] },
+        "preferredGameMode": { "type": "string", "enum": ["classic", "leveled"] },
+        "unlockedLevel": { "type": "number" },
+        "completedLevels": { "type": "number" },
+        "bestLevelScore": { "type": "number" },
+        "bestEasy": { "type": "number" },
+        "bestClassic": { "type": "number" },
+        "bestTurbo": { "type": "number" },
+        "unlockedNameColors": { "type": "array", "description": "Unlocked animated name color IDs (max 60)." },
+        "equippedNameColor": { "type": "string", "maxLength": 40 },
+        "leveledBodyType": { "type": "string", "enum": ["slim", "normal", "chubby"] },
+        "leveledEquippedHat": { "type": "string", "maxLength": 40 },
+        "leveledEquippedGlasses": { "type": "string", "maxLength": 40 },
+        "leveledEquippedSkin": { "type": "string", "maxLength": 40 },
+        "leveledEquippedTrail": { "type": "string", "maxLength": 40 },
+        "leveledEquippedSuit": { "type": "string", "maxLength": 40 },
+        "leveledEquippedNameColor": { "type": "string", "maxLength": 40 },
+        "unlockedAchievements": { "type": "array", "description": "Unlocked Seviyeli achievement medal IDs (max 60)." },
+        "bestLeveledCleanFlightSec": { "type": "number" },
+        "crateInventory": { "type": "object", "description": "Owned unopened crates by tier (standard, epic, mythic, outfit, leveled_outfit)." },
+        "savedCharacters": { "type": "array", "description": "Saved character outfit presets (max 12)." },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "peanutBank", "bodyType", "unlockedIds", "updatedAt"]
+    },
+    "UserPrivateIp": {
+      "title": "UserPrivateIp",
+      "description": "Private IP metadata for moderation and IP ban enforcement, readable only by the user or creator.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ipKey": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ipRaw": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "ipKey", "ipRaw", "updatedAt"]
+    },
+    "BannedIp": {
+      "title": "BannedIp",
+      "description": "Banned IP record managed exclusively by the game creator.",
+      "type": "object",
+      "properties": {
+        "ipKey": { "type": "string", "maxLength": 64, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ipRaw": { "type": "string", "maxLength": 64 },
+        "reason": { "type": "string", "maxLength": 120 },
+        "bannedDisplayName": { "type": "string", "maxLength": 40 },
+        "bannedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ipKey", "ipRaw", "reason", "bannedAt"]
+    },
+    "Account": {
+      "title": "Account",
+      "description": "Email-hashed password account (zero raw email PII stored).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "accountId": { "type": "string", "minLength": 64, "maxLength": 64, "pattern": "^[a-f0-9]+$" },
+        "displayName": { "type": "string", "minLength": 2, "maxLength": 30 },
+        "salt": { "type": "string", "minLength": 8, "maxLength": 64 },
+        "passwordHash": { "type": "string", "minLength": 64, "maxLength": 64, "pattern": "^[a-f0-9]+$" },
+        "isCreator": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "uid",
+        "accountId",
+        "displayName",
+        "salt",
+        "passwordHash",
+        "isCreator",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BannedUid": {
+      "title": "BannedUid",
+      "description": "Banned account record managed exclusively by the game creator.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "displayName": { "type": "string", "maxLength": 40 },
+        "reason": { "type": "string", "maxLength": 120 },
+        "bannedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "reason", "bannedAt"]
+    }
+  },
+  "firestore": {
+    "/accounts/{accountId}": {
+      "schema": { "$ref": "#/entities/Account" },
+      "description": "Email-hashed accounts with salted SHA-256 passwords (no raw email PII stored)."
+    },
+    "/leaderboard/{userId}": {
+      "schema": { "$ref": "#/entities/LeaderboardEntry" },
+      "description": "Public Klasik leaderboard entries sorted by bestScore."
+    },
+    "/leveled_leaderboard/{userId}": {
+      "schema": { "$ref": "#/entities/LeveledLeaderboardEntry" },
+      "description": "Public Seviyeli leaderboard entries sorted by maxLevel."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProgress" },
+      "description": "Private user inventory, cosmetics, and peanut wallet."
+    },
+    "/user_ips/{userId}": {
+      "schema": { "$ref": "#/entities/UserPrivateIp" },
+      "description": "Private IP tracking for moderation."
+    },
+    "/banned_ips/{ipKey}": {
+      "schema": { "$ref": "#/entities/BannedIp" },
+      "description": "IP ban registry."
+    },
+    "/banned_uids/{userId}": {
+      "schema": { "$ref": "#/entities/BannedUid" },
+      "description": "User UID ban registry."
+    }
+  }
+}

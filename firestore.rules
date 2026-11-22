@@ -1,0 +1,490 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function creatorAccountId() {
+      return '99540054bc7aaaa1463ccce568db96d7aea396900d6e00253cce6bf0b4f5fd7b';
+    }
+
+    function isCreatorUid(userId) {
+      return userId == 'acct_kyrmaniacraft'
+        && exists(/databases/$(database)/documents/accounts/99540054bc7aaaa1463ccce568db96d7aea396900d6e00253cce6bf0b4f5fd7b)
+        && get(/databases/$(database)/documents/accounts/99540054bc7aaaa1463ccce568db96d7aea396900d6e00253cce6bf0b4f5fd7b).data.isCreator == true;
+    }
+
+    function isRegisteredStandardUid(userId) {
+      return userId is string
+        && userId.matches('^acct_[a-f0-9]{64}$')
+        && exists(/databases/$(database)/documents/accounts/$(userId[5:69]));
+    }
+
+    function isNotBannedUid(uid) {
+      return !exists(/databases/$(database)/documents/banned_uids/$(uid));
+    }
+
+    function isReservedCreatorName(name) {
+      return name is string && (
+        name.lower().matches('.*[o0ö][\\s_\\-.]*b[\\s_\\-.]*[e3][\\s_\\-.]*z[\\s_\\-.]*f[\\s_\\-.]*[iı1!l][\\s_\\-.]*l.*')
+        || name.lower().matches('.*k[\\s_\\-.]*y[\\s_\\-.]*r[\\s_\\-.]*m[\\s_\\-.]*[a4@][\\s_\\-.]*n[\\s_\\-.]*[iı1!][\\s_\\-.]*[a4@][\\s_\\-.]*c[\\s_\\-.]*r[\\s_\\-.]*[a4@][\\s_\\-.]*f[\\s_\\-.]*t.*')
+      );
+    }
+
+    function isCleanDisplayName(name) {
+      return name is string
+        && name.size() >= 2
+        && name.size() <= 30
+        && !name.lower().matches('.*(amk|aq|orospu|piç|pic|sik|yarrak|yarak|göt|got|amcık|amcik|taşak|tasak|pezevenk|kahpe|ibne|puşt|pust|şerefsiz|serefsiz|fuck|shit|bitch|cunt|dick|asshole).*');
+    }
+
+    function isValidAccount(data, accountId) {
+      return data.keys().hasAll(['uid', 'accountId', 'displayName', 'salt', 'passwordHash', 'isCreator', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly([
+          'uid', 'accountId', 'displayName', 'salt', 'passwordHash', 'isCreator',
+          'emailVerified', 'verificationHash', 'verificationExpiresAtMs',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(accountId)
+        && accountId.matches('^[a-f0-9]{64}$')
+        && data.accountId == accountId
+        && isValidId(data.uid)
+        && (
+          (accountId == creatorAccountId() && data.uid == 'acct_kyrmaniacraft' && data.isCreator == true)
+          || (accountId != creatorAccountId() && data.uid == ('acct_' + accountId) && data.isCreator == false)
+        )
+        && isCleanDisplayName(data.displayName)
+        && (data.isCreator == true || !isReservedCreatorName(data.displayName))
+        && data.salt is string && data.salt.size() >= 8 && data.salt.size() <= 64
+        && data.passwordHash is string && data.passwordHash.size() == 64 && data.passwordHash.matches('^[a-f0-9]+$')
+        && data.isCreator is bool
+        && (!('emailVerified' in data) || data.emailVerified is bool)
+        && (!('verificationHash' in data) || (data.verificationHash is string && data.verificationHash.size() <= 64))
+        && (!('verificationExpiresAtMs' in data) || data.verificationExpiresAtMs is number)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function isValidLeaderboardEntry(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'bestScore', 'difficulty', 'bodyType', 'isCreator', 'hasCustomName', 'lastNameChangeAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'bestScore', 'difficulty', 'bodyType', 'skinId', 'hatId', 'glassesId', 'suitId', 'nameColorId', 'isCreator', 'hasCustomName', 'lastNameChangeAt', 'updatedAt'])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && isCleanDisplayName(data.displayName)
+        && (data.isCreator == true || !isReservedCreatorName(data.displayName))
+        && data.bestScore is number && data.bestScore >= 0 && data.bestScore <= 999999
+        && data.difficulty in ['easy', 'classic', 'turbo']
+        && data.bodyType in ['slim', 'normal', 'chubby']
+        && (!('skinId' in data) || (data.skinId is string && data.skinId.size() <= 40))
+        && (!('hatId' in data) || (data.hatId is string && data.hatId.size() <= 40))
+        && (!('glassesId' in data) || (data.glassesId is string && data.glassesId.size() <= 40))
+        && (!('suitId' in data) || (data.suitId is string && data.suitId.size() <= 40))
+        && (!('nameColorId' in data) || (data.nameColorId is string && data.nameColorId.size() <= 40))
+        && data.isCreator is bool
+        && (data.isCreator == false || isCreatorUid(userId))
+        && data.hasCustomName is bool
+        && data.lastNameChangeAt is timestamp
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function isValidLeveledLeaderboardEntry(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'maxLevel', 'bestLevelScore', 'completedLevels', 'difficulty', 'bodyType', 'isCreator', 'hasCustomName', 'lastNameChangeAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'maxLevel', 'bestLevelScore', 'completedLevels', 'difficulty', 'bodyType', 'skinId', 'hatId', 'glassesId', 'suitId', 'nameColorId', 'isCreator', 'hasCustomName', 'lastNameChangeAt', 'updatedAt'])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && isCleanDisplayName(data.displayName)
+        && (data.isCreator == true || !isReservedCreatorName(data.displayName))
+        && data.maxLevel is number && data.maxLevel >= 1 && data.maxLevel <= 9999
+        && data.bestLevelScore is number && data.bestLevelScore >= 0 && data.bestLevelScore <= 999999
+        && data.completedLevels is number && data.completedLevels >= 0 && data.completedLevels <= 9999
+        && data.difficulty in ['easy', 'classic', 'turbo']
+        && data.bodyType in ['slim', 'normal', 'chubby']
+        && (!('skinId' in data) || (data.skinId is string && data.skinId.size() <= 40))
+        && (!('hatId' in data) || (data.hatId is string && data.hatId.size() <= 40))
+        && (!('glassesId' in data) || (data.glassesId is string && data.glassesId.size() <= 40))
+        && (!('suitId' in data) || (data.suitId is string && data.suitId.size() <= 40))
+        && (!('nameColorId' in data) || (data.nameColorId is string && data.nameColorId.size() <= 40))
+        && data.isCreator is bool
+        && (data.isCreator == false || isCreatorUid(userId))
+        && data.hasCustomName is bool
+        && data.lastNameChangeAt is timestamp
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function isValidWeeklyNameUpdate() {
+      let hadCustomName = ('hasCustomName' in existing()) && existing().hasCustomName == true;
+      let hasTimestamp = ('lastNameChangeAt' in existing()) && existing().lastNameChangeAt is timestamp;
+      return incoming().displayName == existing().displayName
+        ? (
+            incoming().hasCustomName == hadCustomName
+            && (!hasTimestamp || incoming().lastNameChangeAt == existing().lastNameChangeAt)
+          )
+        : (
+            incoming().hasCustomName == true
+            && incoming().lastNameChangeAt == request.time
+            && (
+              !hadCustomName
+              || !hasTimestamp
+              || request.time >= existing().lastNameChangeAt + duration.value(7, 'd')
+            )
+          );
+    }
+
+    function isValidUserProgress(data, userId) {
+      return data.keys().hasAll(['uid', 'peanutBank', 'bodyType', 'unlockedIds', 'updatedAt'])
+        && data.keys().hasOnly([
+          'uid', 'peanutBank', 'bodyType', 'unlockedIds', 'equippedHat', 'equippedGlasses',
+          'equippedSkin', 'equippedTrail', 'equippedSuit', 'magnetLevel', 'doublePeanutLevel', 'shieldCount',
+          'dailyQuestsDate', 'dailyQuestsProgress', 'dailyQuestsClaimed',
+          'preferredDifficulty', 'preferredGameMode', 'unlockedLevel', 'completedLevels', 'bestLevelScore',
+          'bestEasy', 'bestClassic', 'bestTurbo',
+          'unlockedNameColors', 'equippedNameColor',
+          'leveledBodyType', 'leveledEquippedHat', 'leveledEquippedGlasses', 'leveledEquippedSkin',
+          'leveledEquippedTrail', 'leveledEquippedSuit', 'leveledEquippedNameColor',
+          'unlockedAchievements', 'bestLeveledCleanFlightSec',
+          'crateInventory', 'savedCharacters', 'updatedAt'
+        ])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && data.peanutBank is number && data.peanutBank >= 0 && data.peanutBank <= 9999999
+        && data.bodyType in ['slim', 'normal', 'chubby']
+        && data.unlockedIds is list && data.unlockedIds.size() >= 1 && data.unlockedIds.size() <= 200 && data.unlockedIds[0] is string
+        && (!('equippedHat' in data) || (data.equippedHat is string && data.equippedHat.size() <= 40))
+        && (!('equippedGlasses' in data) || (data.equippedGlasses is string && data.equippedGlasses.size() <= 40))
+        && (!('equippedSkin' in data) || (data.equippedSkin is string && data.equippedSkin.size() <= 40))
+        && (!('equippedTrail' in data) || (data.equippedTrail is string && data.equippedTrail.size() <= 40))
+        && (!('equippedSuit' in data) || (data.equippedSuit is string && data.equippedSuit.size() <= 40))
+        && (!('magnetLevel' in data) || (data.magnetLevel is number && data.magnetLevel >= 0 && data.magnetLevel <= 5))
+        && (!('doublePeanutLevel' in data) || (data.doublePeanutLevel is number && data.doublePeanutLevel >= 0 && data.doublePeanutLevel <= 5))
+        && (!('shieldCount' in data) || (data.shieldCount is number && data.shieldCount >= 0 && data.shieldCount <= 99))
+        && (!('dailyQuestsDate' in data) || (data.dailyQuestsDate is string && data.dailyQuestsDate.size() <= 12))
+        && (!('dailyQuestsProgress' in data) || (data.dailyQuestsProgress is map && data.dailyQuestsProgress.size() <= 10))
+        && (!('dailyQuestsClaimed' in data) || (data.dailyQuestsClaimed is list && data.dailyQuestsClaimed.size() <= 3 && (data.dailyQuestsClaimed.size() == 0 || data.dailyQuestsClaimed[0] is string)))
+        && (!('preferredDifficulty' in data) || data.preferredDifficulty in ['easy', 'classic', 'turbo'])
+        && (!('preferredGameMode' in data) || data.preferredGameMode in ['classic', 'leveled'])
+        && (!('unlockedLevel' in data) || (data.unlockedLevel is number && data.unlockedLevel >= 1 && data.unlockedLevel <= 9999))
+        && (!('completedLevels' in data) || (data.completedLevels is number && data.completedLevels >= 0 && data.completedLevels <= 9999))
+        && (!('bestLevelScore' in data) || (data.bestLevelScore is number && data.bestLevelScore >= 0 && data.bestLevelScore <= 999999))
+        && (!('bestEasy' in data) || (data.bestEasy is number && data.bestEasy >= 0 && data.bestEasy <= 999999))
+        && (!('bestClassic' in data) || (data.bestClassic is number && data.bestClassic >= 0 && data.bestClassic <= 999999))
+        && (!('bestTurbo' in data) || (data.bestTurbo is number && data.bestTurbo >= 0 && data.bestTurbo <= 999999))
+        && (!('unlockedNameColors' in data) || (data.unlockedNameColors is list && data.unlockedNameColors.size() >= 1 && data.unlockedNameColors.size() <= 60 && data.unlockedNameColors[0] is string))
+        && (!('equippedNameColor' in data) || (data.equippedNameColor is string && data.equippedNameColor.size() <= 40))
+        && (!('leveledBodyType' in data) || data.leveledBodyType in ['slim', 'normal', 'chubby'])
+        && (!('leveledEquippedHat' in data) || (data.leveledEquippedHat is string && data.leveledEquippedHat.size() <= 40))
+        && (!('leveledEquippedGlasses' in data) || (data.leveledEquippedGlasses is string && data.leveledEquippedGlasses.size() <= 40))
+        && (!('leveledEquippedSkin' in data) || (data.leveledEquippedSkin is string && data.leveledEquippedSkin.size() <= 40))
+        && (!('leveledEquippedTrail' in data) || (data.leveledEquippedTrail is string && data.leveledEquippedTrail.size() <= 40))
+        && (!('leveledEquippedSuit' in data) || (data.leveledEquippedSuit is string && data.leveledEquippedSuit.size() <= 40))
+        && (!('leveledEquippedNameColor' in data) || (data.leveledEquippedNameColor is string && data.leveledEquippedNameColor.size() <= 40))
+        && (!('unlockedAchievements' in data) || (data.unlockedAchievements is list && data.unlockedAchievements.size() <= 60 && (data.unlockedAchievements.size() == 0 || data.unlockedAchievements[0] is string)))
+        && (!('bestLeveledCleanFlightSec' in data) || (data.bestLeveledCleanFlightSec is number && data.bestLeveledCleanFlightSec >= 0 && data.bestLeveledCleanFlightSec <= 999999))
+        && (!('savedCharacters' in data) || (data.savedCharacters is list && data.savedCharacters.size() <= 12))
+        && (!('crateInventory' in data) || (
+          data.crateInventory is map
+          && data.crateInventory.keys().hasAll(['standard', 'epic', 'mythic'])
+          && data.crateInventory.keys().hasOnly(['standard', 'epic', 'mythic', 'outfit', 'leveled_outfit'])
+          && data.crateInventory.standard is number && data.crateInventory.standard >= 0 && data.crateInventory.standard <= 9999
+          && data.crateInventory.epic is number && data.crateInventory.epic >= 0 && data.crateInventory.epic <= 9999
+          && data.crateInventory.mythic is number && data.crateInventory.mythic >= 0 && data.crateInventory.mythic <= 9999
+          && (!('outfit' in data.crateInventory) || (data.crateInventory.outfit is number && data.crateInventory.outfit >= 0 && data.crateInventory.outfit <= 9999))
+          && (!('leveled_outfit' in data.crateInventory) || (data.crateInventory.leveled_outfit is number && data.crateInventory.leveled_outfit >= 0 && data.crateInventory.leveled_outfit <= 9999))
+        ))
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function crateOpenPeanutAllowance() {
+      let stdOpened = ('crateInventory' in existing() && 'crateInventory' in incoming() && existing().crateInventory.standard > incoming().crateInventory.standard)
+        ? (existing().crateInventory.standard - incoming().crateInventory.standard) : 0;
+      let epicOpened = ('crateInventory' in existing() && 'crateInventory' in incoming() && existing().crateInventory.epic > incoming().crateInventory.epic)
+        ? (existing().crateInventory.epic - incoming().crateInventory.epic) : 0;
+      let outfitOpened = ('crateInventory' in existing() && 'crateInventory' in incoming() && ('outfit' in existing().crateInventory) && ('outfit' in incoming().crateInventory) && existing().crateInventory.outfit > incoming().crateInventory.outfit)
+        ? (existing().crateInventory.outfit - incoming().crateInventory.outfit) : 0;
+      let leveledOutfitOpened = ('crateInventory' in existing() && 'crateInventory' in incoming() && ('leveled_outfit' in existing().crateInventory) && ('leveled_outfit' in incoming().crateInventory) && existing().crateInventory.leveled_outfit > incoming().crateInventory.leveled_outfit)
+        ? (existing().crateInventory.leveled_outfit - incoming().crateInventory.leveled_outfit) : 0;
+      let mythicOpened = ('crateInventory' in existing() && 'crateInventory' in incoming() && existing().crateInventory.mythic > incoming().crateInventory.mythic)
+        ? (existing().crateInventory.mythic - incoming().crateInventory.mythic) : 0;
+      return stdOpened * 5 + epicOpened * 5 + outfitOpened * 20 + leveledOutfitOpened * 20 + mythicOpened * 300;
+    }
+
+    function isValidCrateInventoryDelta() {
+      let outfitPrev = ('crateInventory' in existing() && 'outfit' in existing().crateInventory) ? existing().crateInventory.outfit : 0;
+      let outfitNext = ('crateInventory' in incoming() && 'outfit' in incoming().crateInventory) ? incoming().crateInventory.outfit : 0;
+      let leveledOutfitPrev = ('crateInventory' in existing() && 'leveled_outfit' in existing().crateInventory) ? existing().crateInventory.leveled_outfit : 0;
+      let leveledOutfitNext = ('crateInventory' in incoming() && 'leveled_outfit' in incoming().crateInventory) ? incoming().crateInventory.leveled_outfit : 0;
+      return !('crateInventory' in incoming()) || (
+        outfitNext <= outfitPrev + 100 && leveledOutfitNext <= leveledOutfitPrev + 100 && (
+          ('crateInventory' in existing())
+            ? (
+                incoming().crateInventory.standard <= existing().crateInventory.standard + 100
+                && incoming().crateInventory.epic <= existing().crateInventory.epic + 100
+                && incoming().crateInventory.mythic <= existing().crateInventory.mythic + 100
+              )
+            : (
+                incoming().crateInventory.standard <= 100
+                && incoming().crateInventory.epic <= 100
+                && incoming().crateInventory.mythic <= 100
+              )
+        )
+      );
+    }
+
+    function isValidUserPrivateIp(data, userId) {
+      return data.keys().hasAll(['uid', 'ipKey', 'ipRaw', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'ipKey', 'ipRaw', 'updatedAt'])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && isValidId(data.ipKey)
+        && data.ipKey.size() <= 64
+        && data.ipRaw is string && data.ipRaw.size() > 0 && data.ipRaw.size() <= 64
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function isValidBannedIp(data, ipKey) {
+      return data.keys().hasAll(['ipKey', 'ipRaw', 'reason', 'bannedAt'])
+        && data.keys().hasOnly(['ipKey', 'ipRaw', 'reason', 'bannedDisplayName', 'bannedAt'])
+        && data.ipKey == ipKey
+        && isValidId(data.ipKey)
+        && data.ipRaw is string && data.ipRaw.size() > 0 && data.ipRaw.size() <= 64
+        && data.reason is string && data.reason.size() > 0 && data.reason.size() <= 120
+        && (!('bannedDisplayName' in data) || (data.bannedDisplayName is string && data.bannedDisplayName.size() <= 40))
+        && data.bannedAt is timestamp
+        && data.bannedAt == request.time;
+    }
+
+    function isValidBannedUid(data, userId) {
+      return data.keys().hasAll(['uid', 'reason', 'bannedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'reason', 'bannedAt'])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 40))
+        && data.reason is string && data.reason.size() > 0 && data.reason.size() <= 120
+        && data.bannedAt is timestamp
+        && data.bannedAt == request.time;
+    }
+
+    // Health check document
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Email-hashed accounts with instant signup & creator reservation (no verification code barrier)
+    match /accounts/{accountId} {
+      allow get: if isValidId(accountId);
+      allow list: if false;
+      allow create: if isValidId(accountId)
+        && isValidAccount(incoming(), accountId)
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(accountId)
+        && isValidAccount(incoming(), accountId)
+        && incoming().uid == existing().uid
+        && incoming().accountId == existing().accountId
+        && incoming().isCreator == existing().isCreator
+        && incoming().passwordHash == existing().passwordHash
+        && incoming().salt == existing().salt
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Public leaderboard: zero PII, weekly displayName cooldown, reserved creator names blocked
+    match /leaderboard/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if true;
+      allow create: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().lastNameChangeAt == request.time
+        && (isCreatorUid(userId) || (isRegisteredStandardUid(userId) && incoming().bestScore <= 500));
+      allow update: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().uid == existing().uid
+        && isValidWeeklyNameUpdate()
+        && (
+          isCreatorUid(userId)
+          || (
+            isRegisteredStandardUid(userId)
+            && incoming().bestScore >= existing().bestScore
+            && (incoming().bestScore - existing().bestScore) <= 500
+            && (incoming().bestScore == existing().bestScore || request.time >= existing().updatedAt + duration.value(2, 's'))
+          )
+        )
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'bestScore', 'difficulty', 'bodyType', 'skinId', 'hatId', 'glassesId', 'suitId', 'nameColorId', 'isCreator', 'hasCustomName', 'lastNameChangeAt', 'updatedAt'
+        ]);
+      allow delete: if isValidId(userId) && isCreatorUid('acct_kyrmaniacraft');
+    }
+
+    // Public Seviyeli leaderboard: zero PII, weekly displayName cooldown, reserved creator names blocked
+    match /leveled_leaderboard/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if true;
+      allow create: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && isValidLeveledLeaderboardEntry(incoming(), userId)
+        && incoming().lastNameChangeAt == request.time
+        && (isCreatorUid(userId) || (isRegisteredStandardUid(userId) && incoming().maxLevel <= 100 && incoming().completedLevels <= 100 && incoming().bestLevelScore <= 5000));
+      allow update: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && isValidLeveledLeaderboardEntry(incoming(), userId)
+        && incoming().uid == existing().uid
+        && isValidWeeklyNameUpdate()
+        && (
+          isCreatorUid(userId)
+          || (
+            isRegisteredStandardUid(userId)
+            && incoming().maxLevel >= existing().maxLevel
+            && (incoming().maxLevel - existing().maxLevel) <= 10
+            && incoming().completedLevels >= existing().completedLevels
+            && (incoming().completedLevels - existing().completedLevels) <= 10
+            && incoming().bestLevelScore >= existing().bestLevelScore
+            && (incoming().bestLevelScore - existing().bestLevelScore) <= 5000
+            && (incoming().maxLevel == existing().maxLevel || request.time >= existing().updatedAt + duration.value(2, 's'))
+          )
+        )
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName', 'maxLevel', 'bestLevelScore', 'completedLevels', 'difficulty', 'bodyType', 'skinId', 'hatId', 'glassesId', 'suitId', 'nameColorId', 'isCreator', 'hasCustomName', 'lastNameChangeAt', 'updatedAt'
+        ]);
+      allow delete: if isValidId(userId) && isCreatorUid('acct_kyrmaniacraft');
+    }
+
+    // User wallet & cosmetics inventory with anti-cheat bounds
+    match /users/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && isValidUserProgress(incoming(), userId)
+        && (
+          isCreatorUid(userId)
+          || (
+            isRegisteredStandardUid(userId)
+            && incoming().peanutBank <= 25000
+            && incoming().unlockedIds.size() <= 200
+            && (!('unlockedLevel' in incoming()) || incoming().unlockedLevel <= 100)
+            && (!('completedLevels' in incoming()) || incoming().completedLevels <= 100)
+            && (!('magnetLevel' in incoming()) || incoming().magnetLevel <= 5)
+            && (!('doublePeanutLevel' in incoming()) || incoming().doublePeanutLevel <= 5)
+            && (!('shieldCount' in incoming()) || incoming().shieldCount <= 99)
+            && (!('unlockedNameColors' in incoming()) || incoming().unlockedNameColors.size() <= 60)
+            && (!('crateInventory' in incoming()) || (
+              incoming().crateInventory.standard <= 500
+              && incoming().crateInventory.epic <= 250
+              && incoming().crateInventory.mythic <= 100
+              && (!('outfit' in incoming().crateInventory) || incoming().crateInventory.outfit <= 500)
+              && (!('leveled_outfit' in incoming().crateInventory) || incoming().crateInventory.leveled_outfit <= 500)
+            ))
+          )
+        );
+      allow update: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && isValidUserProgress(incoming(), userId)
+        && (!('uid' in existing()) || incoming().uid == existing().uid)
+        && (
+          isCreatorUid(userId)
+          || (
+            isRegisteredStandardUid(userId)
+            && incoming().peanutBank <= existing().peanutBank + 5000 + crateOpenPeanutAllowance()
+            && incoming().unlockedIds.size() <= existing().unlockedIds.size() + 100
+            && isValidCrateInventoryDelta()
+            && (!('unlockedLevel' in incoming()) || !('unlockedLevel' in existing()) || incoming().unlockedLevel <= existing().unlockedLevel + 10)
+            && (!('unlockedLevel' in incoming()) || ('unlockedLevel' in existing()) || incoming().unlockedLevel <= 100)
+            && (!('completedLevels' in incoming()) || !('completedLevels' in existing()) || incoming().completedLevels <= existing().completedLevels + 10)
+            && (!('completedLevels' in incoming()) || ('completedLevels' in existing()) || incoming().completedLevels <= 100)
+            && (!('magnetLevel' in incoming()) || !('magnetLevel' in existing()) || incoming().magnetLevel <= existing().magnetLevel + 1)
+            && (!('doublePeanutLevel' in incoming()) || !('doublePeanutLevel' in existing()) || incoming().doublePeanutLevel <= existing().doublePeanutLevel + 1)
+            && (!('shieldCount' in incoming()) || !('shieldCount' in existing()) || incoming().shieldCount <= existing().shieldCount + 5)
+            && (!('unlockedNameColors' in incoming()) || !('unlockedNameColors' in existing()) || incoming().unlockedNameColors.size() <= existing().unlockedNameColors.size() + 20)
+            && (!('unlockedNameColors' in incoming()) || ('unlockedNameColors' in existing()) || incoming().unlockedNameColors.size() <= 60)
+            && (
+              !('dailyQuestsDate' in existing())
+              || !('dailyQuestsDate' in incoming())
+              || incoming().dailyQuestsDate != existing().dailyQuestsDate
+              || !('dailyQuestsClaimed' in existing())
+              || !('dailyQuestsClaimed' in incoming())
+              || incoming().dailyQuestsClaimed.size() >= existing().dailyQuestsClaimed.size()
+            )
+          )
+        )
+        && incoming().diff(existing()).changedKeys().hasOnly([
+          'peanutBank', 'bodyType', 'unlockedIds', 'equippedHat', 'equippedGlasses', 'equippedSkin',
+          'equippedTrail', 'equippedSuit', 'magnetLevel', 'doublePeanutLevel', 'shieldCount',
+          'dailyQuestsDate', 'dailyQuestsProgress', 'dailyQuestsClaimed',
+          'preferredDifficulty', 'preferredGameMode', 'unlockedLevel', 'completedLevels', 'bestLevelScore',
+          'bestEasy', 'bestClassic', 'bestTurbo',
+          'unlockedNameColors', 'equippedNameColor',
+          'leveledBodyType', 'leveledEquippedHat', 'leveledEquippedGlasses', 'leveledEquippedSkin',
+          'leveledEquippedTrail', 'leveledEquippedSuit', 'leveledEquippedNameColor',
+          'unlockedAchievements', 'bestLeveledCleanFlightSec',
+          'crateInventory', 'savedCharacters', 'updatedAt'
+        ])
+        && incoming().diff(existing()).addedKeys().hasOnly([
+          'uid', 'peanutBank', 'bodyType', 'unlockedIds', 'equippedHat', 'equippedGlasses', 'equippedSkin',
+          'equippedTrail', 'equippedSuit', 'magnetLevel', 'doublePeanutLevel', 'shieldCount',
+          'dailyQuestsDate', 'dailyQuestsProgress', 'dailyQuestsClaimed',
+          'preferredDifficulty', 'preferredGameMode', 'unlockedLevel', 'completedLevels', 'bestLevelScore',
+          'bestEasy', 'bestClassic', 'bestTurbo',
+          'unlockedNameColors', 'equippedNameColor',
+          'leveledBodyType', 'leveledEquippedHat', 'leveledEquippedGlasses', 'leveledEquippedSkin',
+          'leveledEquippedTrail', 'leveledEquippedSuit', 'leveledEquippedNameColor',
+          'unlockedAchievements', 'bestLeveledCleanFlightSec',
+          'crateInventory', 'savedCharacters', 'updatedAt'
+        ]);
+      allow delete: if false;
+    }
+
+    // User IP mapping
+    match /user_ips/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && !exists(/databases/$(database)/documents/banned_ips/$(incoming().ipKey))
+        && isValidUserPrivateIp(incoming(), userId);
+      allow update: if isValidId(userId)
+        && isNotBannedUid(userId)
+        && !exists(/databases/$(database)/documents/banned_ips/$(existing().ipKey))
+        && !exists(/databases/$(database)/documents/banned_ips/$(incoming().ipKey))
+        && isValidUserPrivateIp(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['ipKey', 'ipRaw', 'updatedAt']);
+      allow delete: if isValidId(userId) && isCreatorUid('acct_kyrmaniacraft');
+    }
+
+    // IP ban registry
+    match /banned_ips/{ipKey} {
+      allow get: if isValidId(ipKey);
+      allow list: if isCreatorUid('acct_kyrmaniacraft');
+      allow create, update: if isValidId(ipKey) && isValidBannedIp(incoming(), ipKey);
+      allow delete: if isValidId(ipKey) && isCreatorUid('acct_kyrmaniacraft');
+    }
+
+    // UID ban registry
+    match /banned_uids/{userId} {
+      allow get: if isValidId(userId);
+      allow list: if isCreatorUid('acct_kyrmaniacraft');
+      allow create, update: if isValidId(userId) && isValidBannedUid(incoming(), userId);
+      allow delete: if isValidId(userId) && isCreatorUid('acct_kyrmaniacraft');
+    }
+  }
+}

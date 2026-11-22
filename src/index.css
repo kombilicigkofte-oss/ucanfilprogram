@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    touch-action: manipulation;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes nameFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes nameFlowDiagonal {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+.nc-animated {
+  display: inline-block;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-size: 260% 260%;
+  animation: nameFlow 3.4s ease-in-out infinite;
+}
+
+.nc-fast {
+  display: inline-block;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  background-size: 320% 320%;
+  animation: nameFlowDiagonal 1.9s linear infinite;
+}
+
+.nc_savanna_sun {
+  background-image: linear-gradient(90deg, #facc15, #f97316, #ef4444, #fde047);
+  filter: drop-shadow(0 0 6px rgba(251, 146, 60, 0.38));
+}
+.nc_ice_crystal {
+  background-image: linear-gradient(90deg, #e0f2fe, #38bdf8, #818cf8, #bae6fd);
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.42));
+}
+.nc_crimson_flame {
+  background-image: linear-gradient(90deg, #dc2626, #f97316, #fde047, #b91c1c);
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.45));
+}
+.nc_emerald_bolt {
+  background-image: linear-gradient(90deg, #10b981, #4ade80, #a7f3d0, #059669);
+  filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.4));
+}
+.nc_amethyst_wave {
+  background-image: linear-gradient(90deg, #a855f7, #e879f9, #c084fc, #7e22ce);
+  filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.42));
+}
+.nc_coral_sunset {
+  background-image: linear-gradient(90deg, #fb7185, #fdba74, #f472b6, #f43f5e);
+  filter: drop-shadow(0 0 6px rgba(251, 113, 133, 0.4));
+}
+.nc_toxic_lime {
+  background-image: linear-gradient(90deg, #a3e635, #22c55e, #fde047, #65a30d);
+  filter: drop-shadow(0 0 6px rgba(163, 230, 53, 0.42));
+}
+.nc_midnight_dawn {
+  background-image: linear-gradient(90deg, #6366f1, #cbd5e1, #38bdf8, #4338ca);
+  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.42));
+}
+.nc_cyber_neon {
+  background-image: linear-gradient(90deg, #22d3ee, #ec4899, #a855f7, #06b6d4);
+  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.52));
+}
+.nc_magma_burst {
+  background-image: linear-gradient(90deg, #ef4444, #facc15, #fb923c, #991b1b, #fde047);
+  filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.52));
+}
+.nc_aurora_lights {
+  background-image: linear-gradient(90deg, #2dd4bf, #4ade80, #818cf8, #c084fc);
+  filter: drop-shadow(0 0 8px rgba(45, 212, 191, 0.48));
+}
+.nc_plasma_storm {
+  background-image: linear-gradient(90deg, #38bdf8, #ffffff, #d946ef, #2563eb);
+  filter: drop-shadow(0 0 8px rgba(217, 70, 239, 0.5));
+}
+.nc_mystic_ocean {
+  background-image: linear-gradient(90deg, #0ea5e9, #2dd4bf, #e0f2fe, #1d4ed8);
+  filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.48));
+}
+.nc_sakura_dream {
+  background-image: linear-gradient(90deg, #f9a8d4, #fff1f2, #f472b6, #fde68a);
+  filter: drop-shadow(0 0 7px rgba(244, 114, 182, 0.48));
+}
+.nc_ruby_gold {
+  background-image: linear-gradient(90deg, #facc15, #e11d48, #fef08a, #be123c);
+  filter: drop-shadow(0 0 8px rgba(225, 29, 72, 0.5));
+}
+.nc_royal_velvet {
+  background-image: linear-gradient(90deg, #9333ea, #facc15, #fb7185, #6b21a8);
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.52));
+}
+.nc_silver_thunder {
+  background-image: linear-gradient(90deg, #f8fafc, #94a3b8, #38bdf8, #ffffff, #64748b);
+  filter: drop-shadow(0 0 8px rgba(226, 232, 240, 0.48));
+}
+.nc_mint_berry {
+  background-image: linear-gradient(90deg, #34d399, #2dd4bf, #a855f7, #ec4899);
+  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.48));
+}
+.nc_liquid_gold {
+  background-image: linear-gradient(110deg, #b45309, #fde047, #ffffff, #f59e0b, #fef08a);
+  filter: drop-shadow(0 0 9px rgba(250, 204, 21, 0.6));
+}
+.nc_diamond_prism {
+  background-image: linear-gradient(110deg, #ffffff, #67e8f9, #e879f9, #bae6fd, #ffffff);
+  filter: drop-shadow(0 0 9px rgba(103, 232, 249, 0.62));
+}
+.nc_galaxy_nebula {
+  background-image: linear-gradient(110deg, #4f46e5, #c084fc, #fde047, #ec4899, #312e81);
+  filter: drop-shadow(0 0 9px rgba(192, 132, 252, 0.58));
+}
+.nc_rainbow_wave {
+  background-image: linear-gradient(90deg, #ef4444, #f97316, #facc15, #22c55e, #38bdf8, #a855f7, #ec4899);
+  filter: drop-shadow(0 0 9px rgba(236, 72, 153, 0.52));
+}
+.nc_hologram_flow {
+  background-image: linear-gradient(120deg, #a5f3fc, #f9a8d4, #fef08a, #c4b5fd, #6ee7b7);
+  filter: drop-shadow(0 0 9px rgba(165, 243, 252, 0.58));
+}
+.nc_solar_eclipse {
+  background-image: linear-gradient(110deg, #f97316, #581c87, #fde047, #dc2626, #facc15);
+  filter: drop-shadow(0 0 9px rgba(249, 115, 22, 0.6));
+}
+.nc_cotton_candy_pro {
+  background-image: linear-gradient(110deg, #f472b6, #7dd3fc, #fde047, #c084fc, #f472b6);
+  filter: drop-shadow(0 0 9px rgba(244, 114, 182, 0.56));
+}
+.nc_obsidian_fire {
+  background-image: linear-gradient(110deg, #94a3b8, #ef4444, #ffffff, #f97316, #64748b);
+  filter: drop-shadow(0 0 9px rgba(239, 68, 68, 0.58));
+}
+.nc_emperor_chroma {
+  background-image: linear-gradient(120deg, #facc15, #22d3ee, #ec4899, #4ade80, #a855f7, #fde047);
+  filter: drop-shadow(0 0 11px rgba(250, 204, 21, 0.65));
+}
+.nc_savanna_god {
+  background-image: linear-gradient(120deg, #fef08a, #22c55e, #f59e0b, #ffffff, #10b981, #fde047);
+  filter: drop-shadow(0 0 11px rgba(250, 204, 21, 0.68));
+}
+.nc_cosmic_supernova {
+  background-image: linear-gradient(120deg, #ffffff, #38bdf8, #a855f7, #f43f5e, #fde047, #22d3ee);
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.7));
+}
+.nc_eternal_rainbow {
+  background-image: linear-gradient(120deg, #ff4d4d, #ffa64d, #ffff4d, #4dff88, #4dd2ff, #b84dff, #ff4da6, #ff4d4d);
+  filter: drop-shadow(0 0 12px rgba(255, 77, 166, 0.66));
+}
+.nc_diamond_inferno {
+  background-image: linear-gradient(120deg, #e0f2fe, #38bdf8, #ffffff, #ef4444, #facc15, #67e8f9);
+  filter: drop-shadow(0 0 12px rgba(103, 232, 249, 0.72));
+}
+.nc_golden_empire {
+  background-image: linear-gradient(120deg, #fde047, #ffffff, #f59e0b, #e11d48, #fef9c3, #d97706);
+  filter: drop-shadow(0 0 13px rgba(253, 224, 71, 0.78));
+}
+
+@keyframes csScreenShake {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  12% { transform: translate3d(-10px, 6px, 0) rotate(-0.6deg); }
+  25% { transform: translate3d(10px, -8px, 0) rotate(0.6deg); }
+  38% { transform: translate3d(-8px, -5px, 0) rotate(-0.4deg); }
+  52% { transform: translate3d(7px, 5px, 0) rotate(0.3deg); }
+  68% { transform: translate3d(-4px, 3px, 0); }
+  84% { transform: translate3d(3px, -2px, 0); }
+}
+
+@keyframes csFlashBang {
+  0% { opacity: 0.92; }
+  100% { opacity: 0; }
+}
+
+@keyframes csShockwave {
+  0% {
+    transform: scale(0.25);
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.7);
+    opacity: 0;
+  }
+}
+
+@keyframes csSunburstSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.06); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes csItemPop {
+  0% {
+    transform: scale(0.18) rotate(-10deg);
+    opacity: 0;
+  }
+  58% {
+    transform: scale(1.13) rotate(3deg);
+    opacity: 1;
+  }
+  78% {
+    transform: scale(0.96) rotate(-1deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-cs-shake {
+  animation: csScreenShake 0.62s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.animate-cs-flash {
+  animation: csFlashBang 0.72s ease-out forwards;
+}
+
+.animate-cs-shockwave {
+  animation: csShockwave 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-cs-shockwave-delay {
+  animation: csShockwave 1.35s cubic-bezier(0.16, 1, 0.3, 1) 0.16s forwards;
+}
+
+.animate-cs-sunburst {
+  animation: csSunburstSpin 14s linear infinite;
+}
+
+.animate-cs-pop {
+  animation: csItemPop 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
